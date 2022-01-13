@@ -9,8 +9,10 @@
 #include "shader.h"
 #include "camera.h"
 
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
+void moveModel(int dir, float deltaTime);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -20,13 +22,15 @@ const float prismLen = 0.5f;
 
 // Init Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-
 // timing
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
 // Globals
 glm::mat4 model, view, projection;
+glm::vec3 pos;
+float angle;
+
 
 int main(int argc, char **argv)
 {
@@ -78,55 +82,94 @@ int main(int argc, char **argv)
     Shader ourShader("../src/vertex.shader", "../src/fragment.shader");
 
     // Vertices
-    float vertices[4 * pn][9];
+    float vertices[4 * pn][18];
     for (int i = 0; i < pn; i++)
     {
         vertices[i][0] = 0;
         vertices[i][1] = 0;
         vertices[i][2] = prismLen;
-        vertices[i][3] = 0.5 * cos(i * 2 * M_PI / pn);
-        vertices[i][4] = 0.5 * sin(i * 2 * M_PI / pn);
-        vertices[i][5] = prismLen;
-        vertices[i][6] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
-        vertices[i][7] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][3] = 1;
+        vertices[i][4] = 1;
+        vertices[i][5] = 0;
+        vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
+        vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = prismLen;
+        vertices[i][9] = 1;
+        vertices[i][10] = 1;
+        vertices[i][11] = 0;
+        vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
+        vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][14] = prismLen;
+        vertices[i][15] = 1;
+        vertices[i][16] = 1;
+        vertices[i][17] = 0;
     }
     for (int i = pn; i < 2 * pn; i++)
     {
         vertices[i][0] = 0;
         vertices[i][1] = 0;
         vertices[i][2] = -prismLen;
-        vertices[i][3] = 0.5 * cos(i * 2 * M_PI / pn);
-        vertices[i][4] = 0.5 * sin(i * 2 * M_PI / pn);
-        vertices[i][5] = -prismLen;
-        vertices[i][6] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
-        vertices[i][7] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][3] = 0;
+        vertices[i][4] = 1;
+        vertices[i][5] = 1;
+        vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
+        vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = -prismLen;
+        vertices[i][9] = 0;
+        vertices[i][10] = 1;
+        vertices[i][11] = 1;
+        vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
+        vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][14] = -prismLen;
+        vertices[i][15] = 0;
+        vertices[i][16] = 1;
+        vertices[i][17] = 1;
     }
     for (int i = 2 * pn; i < 3 * pn; i++)
     {
         vertices[i][0] = 0.5 * cos(i * 2 * M_PI / pn);
         vertices[i][1] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][2] = prismLen;
-        vertices[i][3] = 0.5 * cos(i * 2 * M_PI / pn);
-        vertices[i][4] = 0.5 * sin(i * 2 * M_PI / pn);
-        vertices[i][5] = -prismLen;
-        vertices[i][6] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
-        vertices[i][7] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][3] = (1.0f / pn) * (i%pn);
+        vertices[i][4] = 0;
+        vertices[i][5] = (1.0f / pn) * (i%pn);
+        vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
+        vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = -prismLen;
+        vertices[i][9] = (1.0f / pn) * (i%pn);
+        vertices[i][10] = 0;
+        vertices[i][11] = (1.0f / pn) * (i%pn);
+        vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
+        vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][14] = -prismLen;
+        vertices[i][15] = (1.0f / pn) * (i%pn);
+        vertices[i][16] = 0;
+        vertices[i][17] = (1.0f / pn) * (i%pn);
     }
     for (int i = 3 * pn; i < 4 * pn; i++)
     {
         vertices[i][0] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
         vertices[i][1] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
         vertices[i][2] = -prismLen;
-        vertices[i][3] = 0.5 * cos(i * 2 * M_PI / pn);
-        vertices[i][4] = 0.5 * sin(i * 2 * M_PI / pn);
-        vertices[i][5] = prismLen;
-        vertices[i][6] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
-        vertices[i][7] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][3] = (1.0f / pn) * (i%pn);
+        vertices[i][4] = 0;
+        vertices[i][5] = (1.0f / pn) * (i%pn);
+        vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
+        vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = prismLen;
+        vertices[i][9] = (1.0f / pn) * (i%pn);
+        vertices[i][10] = 0;
+        vertices[i][11] = (1.0f / pn) * (i%pn);
+        vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
+        vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
+        vertices[i][14] = prismLen;
+        vertices[i][15] =  (1.0f / pn) * (i%pn);
+        vertices[i][16] = 0;
+        vertices[i][17] =  (1.0f / pn) * (i%pn);
     }
+    // Init object specifics
+    pos = glm::vec3(0, 0, 0);
+    angle = 0;
 
     // Gpu buffer
     unsigned int VBO, VAO;
@@ -137,8 +180,11 @@ int main(int argc, char **argv)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (float *)vertices, GL_STATIC_DRAW); // Uploads data to GPU
 
     // Link vertex array
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0); // Tells openGL how to interpret the data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0); // Tells openGL how to interpret the data
     glEnableVertexAttribArray(0);                                                  // Enables vertex attribute array
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // Unneccecary
     glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind VBO
@@ -166,6 +212,8 @@ int main(int argc, char **argv)
         glBindVertexArray(VAO); // Bind VAO
 
         model = glm::mat4(1.0f);
+        model = glm::translate(model, pos);
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0, 0));
         // Perspective and view
         view = camera.GetViewMatrix();
 
@@ -206,9 +254,73 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+    
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+        moveModel(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+        moveModel(DOWN, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        moveModel(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        moveModel(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        moveModel(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        moveModel(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        float w = 10.0f * deltaTime;
+        angle += w;
+    }
+
+    if (glfwGetKey(window,GLFW_KEY_1) == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(0, 0, 2);
+    }
+    if (glfwGetKey(window,GLFW_KEY_2) == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(0, 0, -2);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+    {
+        float w = 10.0f * deltaTime;
+        glm::mat4 rot = glm::mat3(1.0f);
+        rot = glm::rotate(rot, glm::radians(w), glm::vec3(0, 1, 0));
+        camera.Position = glm::vec3(rot * glm::vec4(camera.Position,1.0f));
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+void moveModel(int dir, float deltaTime)
+{
+    float v = 2.50f * deltaTime;
+    if (dir == UP)
+    {
+        pos += glm::vec3(0, 1, 0) * v;
+    }
+    if (dir == DOWN)
+    {
+        pos -= glm::vec3(0, 1, 0) * v;
+    }
+    if (dir == FORWARD)
+    {
+        pos += glm::vec3(0, 0, 1) * v;
+    }
+    if (dir == BACKWARD)
+    {
+        pos -= glm::vec3(0, 0, 1) * v;
+    }
+    if (dir == RIGHT)
+    {
+        pos += glm::vec3(1, 0, 0) * v;
+    }
+    if (dir == LEFT)
+    {
+        pos -= glm::vec3(1, 0, 0) * v;
+    }
 }
