@@ -9,10 +9,10 @@
 #include "shader.h"
 #include "camera.h"
 
-
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void moveModel(int dir, float deltaTime);
+void resetState();
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -30,7 +30,9 @@ float lastFrame = 0.0f;
 glm::mat4 model, view, projection;
 glm::vec3 pos;
 float angle;
-
+bool outOfPlace = false;
+bool modelSpin = false;
+bool camSpin = false;
 
 int main(int argc, char **argv)
 {
@@ -130,42 +132,42 @@ int main(int argc, char **argv)
         vertices[i][0] = 0.5 * cos(i * 2 * M_PI / pn);
         vertices[i][1] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][2] = prismLen;
-        vertices[i][3] = (1.0f / pn) * (i%pn);
+        vertices[i][3] = (1.0f / pn) * (i % pn);
         vertices[i][4] = 0;
-        vertices[i][5] = (1.0f / pn) * (i%pn);
+        vertices[i][5] = (1.0f / pn) * (i % pn);
         vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
         vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = -prismLen;
-        vertices[i][9] = (1.0f / pn) * (i%pn);
+        vertices[i][9] = (1.0f / pn) * (i % pn);
         vertices[i][10] = 0;
-        vertices[i][11] = (1.0f / pn) * (i%pn);
+        vertices[i][11] = (1.0f / pn) * (i % pn);
         vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
         vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
         vertices[i][14] = -prismLen;
-        vertices[i][15] = (1.0f / pn) * (i%pn);
+        vertices[i][15] = (1.0f / pn) * (i % pn);
         vertices[i][16] = 0;
-        vertices[i][17] = (1.0f / pn) * (i%pn);
+        vertices[i][17] = (1.0f / pn) * (i % pn);
     }
     for (int i = 3 * pn; i < 4 * pn; i++)
     {
         vertices[i][0] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
         vertices[i][1] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
         vertices[i][2] = -prismLen;
-        vertices[i][3] = (1.0f / pn) * (i%pn);
+        vertices[i][3] = (1.0f / pn) * (i % pn);
         vertices[i][4] = 0;
-        vertices[i][5] = (1.0f / pn) * (i%pn);
+        vertices[i][5] = (1.0f / pn) * (i % pn);
         vertices[i][6] = 0.5 * cos(i * 2 * M_PI / pn);
         vertices[i][7] = 0.5 * sin(i * 2 * M_PI / pn);
         vertices[i][8] = prismLen;
-        vertices[i][9] = (1.0f / pn) * (i%pn);
+        vertices[i][9] = (1.0f / pn) * (i % pn);
         vertices[i][10] = 0;
-        vertices[i][11] = (1.0f / pn) * (i%pn);
+        vertices[i][11] = (1.0f / pn) * (i % pn);
         vertices[i][12] = 0.5 * cos((i + 1) * 2 * M_PI / pn);
         vertices[i][13] = 0.5 * sin((i + 1) * 2 * M_PI / pn);
         vertices[i][14] = prismLen;
-        vertices[i][15] =  (1.0f / pn) * (i%pn);
+        vertices[i][15] = (1.0f / pn) * (i % pn);
         vertices[i][16] = 0;
-        vertices[i][17] =  (1.0f / pn) * (i%pn);
+        vertices[i][17] = (1.0f / pn) * (i % pn);
     }
     // Init object specifics
     pos = glm::vec3(0, 0, 0);
@@ -183,7 +185,7 @@ int main(int argc, char **argv)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0); // Tells openGL how to interpret the data
     glEnableVertexAttribArray(0);                                                  // Enables vertex attribute array
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3*sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     // Unneccecary
@@ -212,8 +214,8 @@ int main(int argc, char **argv)
         glBindVertexArray(VAO); // Bind VAO
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, pos);
         model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0, 0));
+        model = glm::translate(model, pos);
         // Perspective and view
         view = camera.GetViewMatrix();
 
@@ -243,51 +245,108 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
-    
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
-        moveModel(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-        moveModel(DOWN, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-        moveModel(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        moveModel(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-        moveModel(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-        moveModel(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
     {
-        float w = 10.0f * deltaTime;
-        angle += w;
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(UP, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
+        camera.ProcessKeyboard(DOWN, deltaTime);
     }
 
-    if (glfwGetKey(window,GLFW_KEY_1) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
+        outOfPlace = true;
+        moveModel(UP, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+    {
+        outOfPlace = true;
+        moveModel(DOWN, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+    {
+        outOfPlace = true;
+        moveModel(FORWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    {
+        outOfPlace = true;
+        moveModel(BACKWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    {
+        outOfPlace = true;
+        moveModel(LEFT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    {
+        outOfPlace = true;
+        moveModel(RIGHT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        modelSpin = !modelSpin;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+    {
+        if (outOfPlace)
+            resetState();
         camera.Position = glm::vec3(0, 0, 2);
     }
-    if (glfwGetKey(window,GLFW_KEY_2) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
+        if (outOfPlace)
+            resetState();
         camera.Position = glm::vec3(0, 0, -2);
     }
 
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
     {
-        float w = 10.0f * deltaTime;
+        camSpin = !camSpin;
+    }
+
+    if (camSpin)
+    {
+        if (outOfPlace)
+            resetState();
+        float w = 40.0f * deltaTime;
         glm::mat4 rot = glm::mat3(1.0f);
         rot = glm::rotate(rot, glm::radians(w), glm::vec3(0, 1, 0));
-        camera.Position = glm::vec3(rot * glm::vec4(camera.Position,1.0f));
+        camera.Position = glm::vec3(rot * glm::vec4(camera.Position, 1.0f));
+    }
+    if (modelSpin)
+    {
+        float w = 40.0f * deltaTime;
+        angle += w;
     }
 }
 
@@ -299,28 +358,39 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void moveModel(int dir, float deltaTime)
 {
     float v = 2.50f * deltaTime;
+    glm::vec3 Front = camera.Position;
+    glm::vec3 Right = glm::normalize(glm::cross(Front, camera.WorldUp));
+    glm::vec3 Up = glm::normalize(glm::cross(Right, Front));
     if (dir == UP)
     {
-        pos += glm::vec3(0, 1, 0) * v;
+        pos += Up * v;
     }
     if (dir == DOWN)
     {
-        pos -= glm::vec3(0, 1, 0) * v;
+        pos -= Up * v;
     }
     if (dir == FORWARD)
     {
-        pos += glm::vec3(0, 0, 1) * v;
+        pos -= Front * v;
     }
     if (dir == BACKWARD)
     {
-        pos -= glm::vec3(0, 0, 1) * v;
+        pos += Front * v;
     }
     if (dir == RIGHT)
     {
-        pos += glm::vec3(1, 0, 0) * v;
+        pos -= Right * v;
     }
     if (dir == LEFT)
     {
-        pos -= glm::vec3(1, 0, 0) * v;
+        pos += Right * v;
     }
+}
+
+void resetState()
+{
+    outOfPlace = false;
+    pos = glm::vec3(0, 0, 0);
+    angle = 0;
+    camera.Position = glm::vec3(0, 0, 3);
 }
