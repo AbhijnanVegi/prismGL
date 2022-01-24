@@ -76,9 +76,9 @@ int main(int argc, char **argv)
     // OpenGL Config
     // Enable blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
+    // glEnable(GL_BLEND);
     // Enable depth
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     // Compiler shaders
     Shader ourShader("../src/vertex.shader", "../src/fragment.shader");
@@ -214,8 +214,8 @@ int main(int argc, char **argv)
         glBindVertexArray(VAO); // Bind VAO
 
         model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0, 0));
         model = glm::translate(model, pos);
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0, 0));
         // Perspective and view
         view = camera.GetViewMatrix();
 
